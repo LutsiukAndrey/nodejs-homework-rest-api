@@ -38,12 +38,15 @@ const login = async (req, res) => {
   if (!passwordCompare) {
     throw HttpError(401, "password incorrect");
   }
+  const { _id: id } = user;
 
   const payload = {
-    id: user._id,
+    id,
   };
 
   const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "48h" });
+
+  await User.findByIdAndUpdate(id, { token });
 
   res.json({
     token,
@@ -54,7 +57,29 @@ const login = async (req, res) => {
   });
 };
 
+const getCurrent = async (req, res) => {
+  const { name, email } = req.user;
+
+  res.json({
+    user: {
+      name,
+      email,
+    },
+  });
+};
+
+const logout = async (req, res) => {
+  const { _id } = req.user;
+
+  await User.findByIdAndUpdate(_id, { token: null });
+  res.json({
+    message: "logout success",
+  });
+};
+
 module.exports = {
   register: ctrlWrapper(register),
   login: ctrlWrapper(login),
+  getCurrent: ctrlWrapper(getCurrent),
+  logout: ctrlWrapper(logout),
 };
