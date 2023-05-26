@@ -2,6 +2,12 @@ const bcrypt = require("bcryptjs");
 
 const jwt = require("jsonwebtoken");
 
+const gravatar = require("gravatar");
+
+const path = require("path");
+
+const fs = require("fs/promises");
+
 const { User } = require("../models/user");
 
 const { HttpError } = require("../helpers/index");
@@ -18,8 +24,13 @@ const register = async (req, res) => {
   }
 
   const hashPassword = await bcrypt.hash(password, 10);
+  const avatarUrl = gravatar.url(email);
 
-  const result = await User.create({ ...req.body, password: hashPassword });
+  const result = await User.create({
+    ...req.body,
+    password: hashPassword,
+    avatarUrl,
+  });
 
   res.status(201).json({
     name: result.name,
@@ -77,9 +88,26 @@ const logout = async (req, res) => {
   });
 };
 
+const avatarsDir = path.resolve("public", "avatars");
+
+const updateAvatar = async (req, res) => {
+  const { path: tempUpload, filename } = req.file;
+  const resultUpload = path.join(avatarsDir, filename);
+
+  await fs.rename(tempUpload, resultUpload);
+  const avatarUrl = path.join("avatars", filename);
+  console.log(req.user._id);
+  await User.findByIdAndUpdate(req.user._id, { avatarUrl });
+
+  res.json({
+    avatarUrl,
+  });
+};
+
 module.exports = {
   register: ctrlWrapper(register),
   login: ctrlWrapper(login),
   getCurrent: ctrlWrapper(getCurrent),
   logout: ctrlWrapper(logout),
+  updateAvatar: ctrlWrapper(updateAvatar),
 };

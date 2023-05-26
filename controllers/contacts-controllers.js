@@ -1,6 +1,11 @@
 const { HttpError } = require("../helpers/index");
 const { Contact } = require("../models/contact");
 const { ctrlWrapper } = require("../utils");
+//
+//
+// const fs = require("fs/promises");
+//
+//
 
 const getAllContacts = async (req, res, next) => {
   const { _id: owner } = req.user;
@@ -25,6 +30,7 @@ const getContactById = async (req, res) => {
 };
 
 const addContact = async (req, res) => {
+  console.log(req.file);
   const { _id: owner } = req.user;
   const result = await Contact.create({ ...req.body, owner });
   res.status(201).json(result);
